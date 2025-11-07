@@ -135,10 +135,17 @@ Common variables:
 
 ## Troubleshooting
 
-### Build Fails
+### Build Fails - pandas/NumPy Compatibility
+If you see errors about pandas building from source:
+- **Issue**: pandas 2.1.3 doesn't support Python 3.13
+- **Solution**: Updated to pandas>=2.2.0 and Python 3.11
+- **Check**: Verify `runtime.txt` has `python-3.11.0` and `render.yaml` has `PYTHON_VERSION: 3.11.0`
+
+### Build Fails - General
 - Check `requirements.txt` for all dependencies
-- Verify Python version compatibility
+- Verify Python version compatibility (use Python 3.11 for best compatibility)
 - Check build logs in Render dashboard
+- Ensure all package versions are compatible with Python 3.11
 
 ### Service Won't Start
 - Verify `gunicorn` is in requirements.txt
