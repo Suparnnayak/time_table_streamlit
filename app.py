@@ -3,19 +3,15 @@ from flask_cors import CORS
 import google.generativeai as genai
 import os
 from datetime import datetime
-from functools import wraps
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for website integration
 
-# API Key for authentication (set via environment variable)
-API_KEY = os.getenv('API_KEY', 'your-secret-api-key-here-change-this')
-
-# Configure Gemini API
-# Option 1: Use environment variable (recommended for security)
-# GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
-# Option 2: Set directly here (works for quick testing)
-GEMINI_API_KEY = 'AIzaSyBd0GWKcHH1SuKcef70diWSBEIBKCrqYeE'
+# Configure Gemini API (set via environment variable)
+# For local development: Set GEMINI_API_KEY environment variable
+# For production (Render): Set GEMINI_API_KEY in Render dashboard environment variables
+# This is the ONLY key needed - kept secure on server side
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 
 # Configure Gemini model
 # Try different model names (prioritize newer stable models)
@@ -139,19 +135,8 @@ When suggesting courses or skills, provide:
 
 Format your responses in a friendly, conversational manner while maintaining professionalism. Use bullet points, numbered lists, and clear sections to make information easy to digest."""
 
-# API Key Authentication Decorator
-def require_api_key(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('X-API-Key') or request.headers.get('Authorization', '').replace('Bearer ', '')
-        
-        if not api_key or api_key != API_KEY:
-            return jsonify({
-                'error': 'Unauthorized. Please provide a valid API key in the X-API-Key header or Authorization Bearer token.'
-            }), 401
-        
-        return f(*args, **kwargs)
-    return decorated_function
+# No API key authentication needed - API is publicly accessible
+# Only GEMINI_API_KEY is required (server-side only, never exposed to clients)
 
 @app.route('/', methods=['GET'])
 def api_docs():
@@ -163,10 +148,8 @@ def api_docs():
         'description': 'RESTful API for educational chatbot powered by Google Gemini',
         'base_url': base_url,
         'authentication': {
-            'type': 'API Key',
-            'header': 'X-API-Key',
-            'alternative': 'Authorization: Bearer <your-api-key>',
-            'note': 'Set API_KEY environment variable on server to configure your API key'
+            'type': 'None - Public API',
+            'note': 'No authentication required. Just use the API URL directly.'
         },
         'endpoints': {
             'GET /': {
@@ -184,7 +167,7 @@ def api_docs():
             },
             'POST /api/chat': {
                 'description': 'Send a message to the educational chatbot',
-                'authentication': True,
+                'authentication': False,
                 'request_body': {
                     'message': 'string (required) - Your educational question or query'
                 },
@@ -202,7 +185,7 @@ def api_docs():
             },
             'GET /api/models': {
                 'description': 'List available Gemini models',
-                'authentication': True,
+                'authentication': False,
                 'response': {
                     'available_models': 'array - List of available models',
                     'current_model': 'string - Currently active model'
@@ -214,25 +197,17 @@ def api_docs():
 # Health check (no auth required)
 curl {base_url}/api/health
 
-# Chat request (with API key)
+# Chat request (no authentication needed)
 curl -X POST {base_url}/api/chat \\
   -H "Content-Type: application/json" \\
-  -H "X-API-Key: your-api-key-here" \\
-  -d '{{"message": "What is Python programming?"}}'
-
-# Using Authorization header
-curl -X POST {base_url}/api/chat \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer your-api-key-here" \\
   -d '{{"message": "What is Python programming?"}}'
 ''',
             'javascript': f'''
-// Using fetch API
+// Using fetch API (no authentication needed)
 fetch('{base_url}/api/chat', {{
   method: 'POST',
   headers: {{
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-key-here'
+    'Content-Type': 'application/json'
   }},
   body: JSON.stringify({{
     message: 'What courses should I take for data science?'
@@ -248,8 +223,7 @@ import requests
 response = requests.post(
     '{base_url}/api/chat',
     headers={{
-        'Content-Type': 'application/json',
-        'X-API-Key': 'your-api-key-here'
+        'Content-Type': 'application/json'
     }},
     json={{
         'message': 'What skills do I need for machine learning?'
@@ -262,14 +236,12 @@ print(data['response'])
         },
         'error_responses': {
             '400': 'Bad Request - Missing or invalid request body',
-            '401': 'Unauthorized - Invalid or missing API key',
             '500': 'Internal Server Error - Check server logs for details'
         }
     })
 
 
 @app.route('/api/chat', methods=['POST'])
-@require_api_key
 def chat():
     """Handle chat requests"""
     try:
@@ -343,11 +315,12 @@ def health():
     return jsonify({
         'status': 'healthy',
         'gemini_configured': bool(GEMINI_API_KEY),
-        'model_initialized': model is not None
+        'model_initialized': model is not None,
+        'message': 'API is running. Set GEMINI_API_KEY environment variable for full functionality.',
+        'authentication': 'None - Public API'
     })
 
 @app.route('/api/models', methods=['GET'])
-@require_api_key
 def list_models():
     """List available Gemini models (for debugging)"""
     try:
@@ -386,6 +359,9 @@ if __name__ == '__main__':
     print(f"📍 Alternative URL: http://127.0.0.1:{port}")
     print(f"🔧 Debug mode: {'ON' if debug else 'OFF'}")
     print(f"🔑 Gemini API: {'✅ Configured' if GEMINI_API_KEY else '❌ Not configured'}")
+    if not GEMINI_API_KEY:
+        print("⚠️  WARNING: GEMINI_API_KEY not set. Chat functionality will not work.")
+    print("🌐 API is publicly accessible - no authentication required")
     print("="*60)
     print("Press CTRL+C to stop the server")
     print("="*60 + "\n")

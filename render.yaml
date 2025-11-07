@@ -7,9 +7,6 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false
-      - key: API_KEY
-        sync: false
-        generateValue: true
       - key: PORT
         value: 10000
 
