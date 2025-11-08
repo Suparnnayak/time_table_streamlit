@@ -21,44 +21,19 @@ As of the NEP extension, the pipeline understands:
 python run_demo.py
 ```
 
-### REST API (Flask)
+### Streamlit Web Interface
 ```bash
-python app.py
+streamlit run app.py
 ```
 
-The Flask API provides:
-- **POST** `/api/generate` - Generate timetable from JSON input
-- **POST** `/api/validate` - Validate input JSON structure
-- **GET** `/api/info` - Get API information and schema
-- **GET** `/health` - Health check endpoint
+The Streamlit app provides:
+- **Load Data**: Use default data or upload custom JSON files
+- **Edit Data**: Modify data directly in the interface
+- **Generate Timetable**: Generate optimized timetables with adjustable time limit
+- **View Results**: See assignments, student timetables, faculty timetables, and violations
+- **Download**: Download results as JSON files
 
-**Example Request:**
-```bash
-curl -X POST http://localhost:5000/api/generate \
-  -H "Content-Type: application/json" \
-  -d @example_request.json
-```
-
-See `README_FLASK.md` for detailed API documentation.
-
-## Deployment
-
-### Deploy to Render
-
-1. Push your code to GitHub
-2. Connect your repository to Render
-3. Render will automatically detect `render.yaml` and deploy
-
-**Quick Deploy:**
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push origin main
-```
-
-Then connect your GitHub repo to Render at https://render.com
-
-See `DEPLOY.md` for detailed deployment instructions.
+The app will open at `http://localhost:8501`
 
 ## Input schema (dummy data lives under `timetable_ai/dummy_data/`)
 - `slots.json`: canonical list of slot identifiers used everywhere.
